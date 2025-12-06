@@ -2,7 +2,7 @@
 
 > **A Next-Gen Gamified E-Learning Platform for Mastering AI Engineering**
 
-[Live Demo](#) · [Report Bug](#) · [Request Feature](#)
+[Live Demo](https://ai-learning-platform-gamma.vercel.app/)
 
 ---
 
