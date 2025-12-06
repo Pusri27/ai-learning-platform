@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![Project Banner](https://via.placeholder.com/1200x400.png?text=AI+Learning+Platform+Banner)
-*(Ganti dengan screenshot dashboard Anda)*
 
 **Platform E-Learning Interaktif untuk Menguasai AI Engineering & Python**
 
