@@ -1,0 +1,16 @@
+{
+    "name": "AI Learning Platform",
+    "short_name": "AI Learn",
+    "description": "Learn AI, Python, and Math with an interactive platform",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4f46e5",
+    "icons": [
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml"
+        }
+    ]
+}
