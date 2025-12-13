@@ -1,28 +1,34 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { buildQuizPrompt, QuizResponse } from './promptTemplates';
-import { withRetry, getAIErrorMessage, AIQuotaExceededError } from './retry';
+import { withRetry, getAIErrorMessage } from './retry';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Groq client
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY || '',
+});
 
 export async function generateQuiz(lessonContent: string): Promise<QuizResponse> {
     const { system, user } = buildQuizPrompt(lessonContent);
 
     // Check if API key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
         throw new Error('Fitur AI belum dikonfigurasi. Silakan hubungi administrator.');
     }
 
     try {
         const response = await withRetry(async () => {
-            const model = genAI.getGenerativeModel({
-                model: 'gemini-2.0-flash',
-                generationConfig: { responseMimeType: 'application/json' }
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [
+                    { role: 'system', content: system },
+                    { role: 'user', content: user }
+                ],
+                model: 'llama-3.3-70b-versatile',
+                temperature: 0.7,
+                max_tokens: 2048,
+                response_format: { type: 'json_object' }
             });
 
-            const prompt = `${system}\n\n${user}`;
-            const result = await model.generateContent(prompt);
-            const aiResponse = result.response;
-            const text = aiResponse.text();
+            const text = chatCompletion.choices[0]?.message?.content;
 
             if (!text) {
                 throw new Error('Empty response from AI');
@@ -40,3 +46,4 @@ export async function generateQuiz(lessonContent: string): Promise<QuizResponse>
         throw new Error(userMessage);
     }
 }
+

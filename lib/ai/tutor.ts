@@ -1,8 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { buildTutorPrompt, TutorResponse } from './promptTemplates';
 import { withRetry, getAIErrorMessage } from './retry';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Groq client
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY || '',
+});
 
 export async function getTutorResponse(
     message: string,
@@ -11,7 +14,7 @@ export async function getTutorResponse(
     const { system, user } = buildTutorPrompt(message, context);
 
     // Check if API key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
         return {
             reply: 'Maaf, fitur AI belum dikonfigurasi. Silakan hubungi administrator.',
             suggestedTopics: [],
@@ -21,21 +24,24 @@ export async function getTutorResponse(
 
     try {
         const response = await withRetry(async () => {
-            const model = genAI.getGenerativeModel({
-                model: 'gemini-2.0-flash',
-                generationConfig: { responseMimeType: 'application/json' }
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [
+                    { role: 'system', content: system },
+                    { role: 'user', content: user }
+                ],
+                model: 'llama-3.3-70b-versatile',
+                temperature: 0.7,
+                max_tokens: 2048,
+                response_format: { type: 'json_object' }
             });
 
-            const prompt = `${system}\n\nUser Message: ${user}`;
-            const result = await model.generateContent(prompt);
-            const aiResponse = result.response;
-            const text = aiResponse.text();
+            const text = chatCompletion.choices[0]?.message?.content;
 
             if (!text) {
                 throw new Error('Empty response from AI');
             }
 
-            // Clean up potential markdown code blocks if Gemini wraps the JSON (even with mime type it might)
+            // Clean up potential markdown code blocks
             const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
             return JSON.parse(cleanText) as TutorResponse;
         }, { maxRetries: 3 });
@@ -51,3 +57,4 @@ export async function getTutorResponse(
         };
     }
 }
+
