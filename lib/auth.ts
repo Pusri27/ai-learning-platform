@@ -41,7 +41,19 @@ export async function getSession() {
     try {
         const {
             data: { session },
+            error
         } = await supabase.auth.getSession();
+
+        if (error) {
+            // Suppress refresh token errors to prevent rate limiting
+            if (error.message?.includes('refresh_token_not_found') ||
+                error.message?.includes('Invalid Refresh Token')) {
+                return null;
+            }
+            console.error('Session error:', error);
+            return null;
+        }
+
         return session;
     } catch (error) {
         console.error('Error:', error);
