@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { buildTutorPrompt, TutorResponse } from './promptTemplates';
+import { withRetry, getAIErrorMessage } from './retry';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function getTutorResponse(
     message: string,
@@ -9,35 +10,44 @@ export async function getTutorResponse(
 ): Promise<TutorResponse> {
     const { system, user } = buildTutorPrompt(message, context);
 
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+        return {
+            reply: 'Maaf, fitur AI belum dikonfigurasi. Silakan hubungi administrator.',
+            suggestedTopics: [],
+            questionsToAsk: []
+        };
+    }
+
     try {
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash',
-            generationConfig: { responseMimeType: 'application/json' }
-        });
+        const response = await withRetry(async () => {
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-2.0-flash',
+                generationConfig: { responseMimeType: 'application/json' }
+            });
 
-        // Gemini doesn't have a separate "system" role in the same way as OpenAI for simple chat.
-        // We can prepend the system instruction to the user message or use the systemInstruction property if available (beta).
-        // For simplicity and compatibility, we'll combine them or use a chat session.
+            const prompt = `${system}\n\nUser Message: ${user}`;
+            const result = await model.generateContent(prompt);
+            const aiResponse = result.response;
+            const text = aiResponse.text();
 
-        // Using generateContent with a combined prompt is often easiest for single-turn.
-        // However, to ensure JSON output, we should be explicit.
+            if (!text) {
+                throw new Error('Empty response from AI');
+            }
 
-        const prompt = `${system}\n\nUser Message: ${user}`;
+            // Clean up potential markdown code blocks if Gemini wraps the JSON (even with mime type it might)
+            const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+            return JSON.parse(cleanText) as TutorResponse;
+        }, { maxRetries: 3 });
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
-
-        if (!text) {
-            throw new Error('Empty response from AI');
-        }
-
-        // Clean up potential markdown code blocks if Gemini wraps the JSON (even with mime type it might)
-        const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
-
-        return JSON.parse(cleanText) as TutorResponse;
+        return response;
     } catch (error: any) {
         console.error('Error calling AI Tutor:', error);
-        throw new Error(error.message || 'Failed to get response from AI Tutor');
+        const userMessage = getAIErrorMessage(error);
+        return {
+            reply: userMessage,
+            suggestedTopics: ['Coba lagi nanti'],
+            questionsToAsk: []
+        };
     }
 }

@@ -26,17 +26,25 @@ export default function TutorPage() {
         const fetchHistory = async () => {
             try {
                 const res = await fetch('/api/tutor');
+                if (!res.ok) {
+                    console.error('Failed to fetch chat history: HTTP', res.status);
+                    return; // Keep default message if fetch fails
+                }
                 const data = await res.json();
-                if (data.messages && Array.isArray(data.messages)) {
-                    // Map DB format to UI format if needed, but they are similar enough
-                    // DB: { role: 'user' | 'assistant', content: string, ... }
-                    // UI: { role: 'user' | 'assistant', content: string }
-                    if (data.messages.length > 0) {
-                        setMessages(data.messages.map((m: any) => ({ role: m.role, content: m.content })));
+                if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+                    // Only replace if we have valid messages
+                    const validMessages = data.messages
+                        .filter((m: any) => m.role && m.content)
+                        .map((m: any) => ({ role: m.role, content: m.content }));
+
+                    if (validMessages.length > 0) {
+                        setMessages(validMessages);
                     }
+                    // If no valid messages, keep the default welcome message
                 }
             } catch (error) {
                 console.error('Failed to fetch chat history:', error);
+                // Keep default message on error
             }
         };
 
