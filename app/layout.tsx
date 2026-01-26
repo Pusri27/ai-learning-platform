@@ -16,26 +16,11 @@ export const metadata: Metadata = {
     description: "Learn AI with an interactive platform",
 };
 
-import { createClient } from '@/lib/auth';
-
-export default async function RootLayout({
+export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    let serverRole = null;
-    if (user) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        serverRole = profile?.role;
-    }
-
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${fontSans.variable} font-sans`}>
@@ -46,7 +31,7 @@ export default async function RootLayout({
                     disableTransitionOnChange
                 >
                     <div className="flex flex-col min-h-screen">
-                        <Navbar serverRole={serverRole} />
+                        <Navbar />
                         <main className="flex-grow">{children}</main>
                         <Footer />
                     </div>

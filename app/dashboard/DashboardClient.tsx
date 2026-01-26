@@ -25,14 +25,20 @@ const container = {
     show: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1
+            staggerChildren: 0.05 // Reduced from 0.1 for faster loading feel
         }
     }
 };
 
 const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+    hidden: { opacity: 0, y: 10 }, // Reduced from y: 20 for subtler effect
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: {
+            duration: 0.2 // Faster animation
+        }
+    }
 };
 
 import Leaderboard from '@/components/Leaderboard';
