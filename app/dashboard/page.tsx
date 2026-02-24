@@ -5,9 +5,9 @@ import DashboardClient from './DashboardClient';
 
 export default async function Dashboard() {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -27,13 +27,13 @@ export default async function Dashboard() {
         // Lessons Completed
         supabase.from('user_progress')
             .select('*', { count: 'exact', head: true })
-            .eq('user_id', session.user.id)
+            .eq('user_id', user.id)
             .eq('completed', true),
 
         // Quiz Results
         supabase.from('quiz_results')
             .select('score')
-            .eq('user_id', session.user.id),
+            .eq('user_id', user.id),
 
         // Suggested Courses
         supabase.from('courses').select('*').limit(3),
@@ -50,7 +50,7 @@ export default async function Dashboard() {
         // Unlocked Achievements
         supabase.from('user_achievements')
             .select('achievement_id, unlocked_at')
-            .eq('user_id', session.user.id)
+            .eq('user_id', user.id)
     ]);
 
     // Calculate average score
@@ -73,7 +73,7 @@ export default async function Dashboard() {
 
     return (
         <DashboardClient
-            user={session.user}
+            user={user}
             totalCourses={totalCourses || 0}
             lessonsCompleted={lessonsCompleted || 0}
             averageScore={averageScore}

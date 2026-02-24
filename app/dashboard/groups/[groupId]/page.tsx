@@ -4,9 +4,9 @@ import GroupChatClient from './GroupChatClient';
 
 export default async function GroupChatPage({ params }: { params: { groupId: string } }) {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -17,7 +17,7 @@ export default async function GroupChatPage({ params }: { params: { groupId: str
         .from('group_members')
         .select('id')
         .eq('group_id', groupId)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .single();
 
     if (!membership) {
@@ -45,7 +45,7 @@ export default async function GroupChatPage({ params }: { params: { groupId: str
             </header>
 
             <div className="flex-1 overflow-hidden">
-                <GroupChatClient groupId={groupId} userId={session.user.id} />
+                <GroupChatClient groupId={groupId} userId={user.id} />
             </div>
         </div>
     );

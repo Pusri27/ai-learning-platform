@@ -24,24 +24,50 @@ export default function Register() {
 
         console.log('Attempting register with:', cleanEmail); // Debugging
 
-        const { error } = await supabase.auth.signUp({
-            email: cleanEmail,
-            password,
-            options: {
-                data: {
-                    name: name,
+        try {
+            const { error } = await supabase.auth.signUp({
+                email: cleanEmail,
+                password,
+                options: {
+                    data: {
+                        name: name,
+                    },
                 },
-            },
-        });
+            });
 
-        if (error) {
-            console.error('Register error:', error);
-            setError(error.message);
+            if (error) {
+                console.error('Register error:', error);
+
+                // Provide user-friendly error messages with explanations
+                let errorMessage = 'An error occurred during registration. Please try again.';
+
+                // Handle specific error cases
+                if (error.message.includes('User already registered')) {
+                    errorMessage = 'Email already registered. Please use a different email or login.';
+                } else if (error.message.includes('Password should be at least')) {
+                    errorMessage = 'Password is too weak. Use at least 6 characters with a mix of letters and numbers.';
+                } else if (error.message.includes('Invalid email')) {
+                    errorMessage = 'Invalid email format. Example: name@email.com';
+                } else if (error.message.includes('Email') && error.message.includes('already')) {
+                    errorMessage = 'Email already registered. Please use a different email or login.';
+                } else if (error.message.includes('Unable to validate email address')) {
+                    errorMessage = 'Invalid email. Please check your email address.';
+                } else if (error.message.includes('rate limit')) {
+                    errorMessage = 'Too many attempts. Please wait a moment.';
+                }
+
+                setError(errorMessage);
+                setLoading(false);
+            } else {
+                // Auto login or redirect to login
+                // Force full reload to ensure auth state is correctly propagated
+                window.location.href = '/dashboard';
+            }
+        } catch (err) {
+            console.error('Unexpected error during registration:', err);
+            // Handle network errors or other unexpected errors
+            setError('Unable to connect to server. Please check your internet connection and try again.');
             setLoading(false);
-        } else {
-            // Auto login or redirect to login
-            // Force full reload to ensure auth state is correctly propagated
-            window.location.href = '/dashboard';
         }
     };
 

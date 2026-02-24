@@ -13,15 +13,16 @@ export default function DebugAuthPage() {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) throw sessionError;
-                setSession(session);
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError) throw userError;
+                // Note: user state in this debug page is still named 'session' and 'setSession' for UI consistency in the debug view, but fetching correctly now.
+                setSession({ user });
 
-                if (session?.user) {
+                if (user) {
                     const { data: profile, error: profileError } = await supabase
                         .from('profiles')
                         .select('*')
-                        .eq('id', session.user.id)
+                        .eq('id', user.id)
                         .single();
 
                     if (profileError) {

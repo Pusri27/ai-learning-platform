@@ -4,12 +4,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
     const supabase = await createClient();
 
-    // Check if we have a session
+    // Check if we have a user
     const {
-        data: { session },
-    } = await supabase.auth.getSession();
+        data: { user },
+    } = await supabase.auth.getUser();
 
-    if (session) {
+    if (user) {
         await supabase.auth.signOut();
     }
 

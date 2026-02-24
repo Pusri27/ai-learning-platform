@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 export default async function CourseDetailPage({ params }: { params: { courseId: string } }) {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -33,7 +33,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
     const { data: progress } = await supabase
         .from('user_progress')
         .select('lesson_id, completed')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .eq('course_id', params.courseId);
 
     const completedLessonIds = new Set(progress?.filter(p => p.completed).map(p => p.lesson_id));

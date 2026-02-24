@@ -5,9 +5,9 @@ import { Users, MessageCircle } from 'lucide-react';
 
 export default async function StudyGroupsPage() {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -21,7 +21,7 @@ export default async function StudyGroupsPage() {
     const { data: memberships } = await supabase
         .from('group_members')
         .select('group_id')
-        .eq('user_id', session.user.id);
+        .eq('user_id', user.id);
 
     const joinedGroupIds = new Set(memberships?.map(m => m.group_id));
 

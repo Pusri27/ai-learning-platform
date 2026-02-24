@@ -45,12 +45,23 @@ export async function POST(request: NextRequest) {
         });
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 401 });
+            // Provide user-friendly error messages
+            let errorMessage = 'Invalid email or password. Please try again.';
+
+            // Handle specific error cases
+            if (error.message.includes('Email not confirmed')) {
+                errorMessage = 'Email not verified. Please check your inbox.';
+            } else if (error.message.includes('Invalid login credentials')) {
+                errorMessage = 'Invalid email or password. Please try again.';
+            } else if (error.message.includes('Email')) {
+                errorMessage = 'Invalid email format.';
+            }
+
+            return NextResponse.json({ error: errorMessage }, { status: 401 });
         }
 
         return response;
     } catch (error) {
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: 'An error occurred. Please try again.' }, { status: 500 });
     }
 }
-

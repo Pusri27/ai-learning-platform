@@ -27,9 +27,9 @@ function formatRelativeTime(timestamp: string): string {
 
 export default async function ProgressPage() {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -42,7 +42,7 @@ export default async function ProgressPage() {
     const { data: progress, error: progressError } = await supabase
         .from('user_progress')
         .select('course_id, lesson_id, completed, updated_at')
-        .eq('user_id', session.user.id);
+        .eq('user_id', user.id);
 
     // Fetch total lessons per course
     const { data: allLessons } = await supabase
@@ -53,7 +53,7 @@ export default async function ProgressPage() {
     const { data: quizResults } = await supabase
         .from('quiz_results')
         .select('score')
-        .eq('user_id', session.user.id);
+        .eq('user_id', user.id);
 
     // Fetch user achievements (unlocked only)
     const { data: userAchievements } = await supabase
@@ -67,7 +67,7 @@ export default async function ProgressPage() {
                 icon
             )
         `)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('unlocked_at', { ascending: false })
         .limit(3);
 
@@ -80,7 +80,7 @@ export default async function ProgressPage() {
                 title
             )
         `)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .eq('completed', true)
         .not('updated_at', 'is', null)
         .order('updated_at', { ascending: false })
@@ -96,7 +96,7 @@ export default async function ProgressPage() {
                 title
             )
         `)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -109,7 +109,7 @@ export default async function ProgressPage() {
                 name
             )
         `)
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('joined_at', { ascending: false })
         .limit(5);
 

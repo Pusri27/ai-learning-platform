@@ -4,9 +4,9 @@ import LessonClient from './LessonClient';
 
 export default async function LessonPage({ params }: { params: { courseId: string; lessonId: string } }) {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -46,7 +46,7 @@ export default async function LessonPage({ params }: { params: { courseId: strin
     const { data: progress } = await supabase
         .from('user_progress')
         .select('completed')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .eq('lesson_id', params.lessonId)
         .single();
 

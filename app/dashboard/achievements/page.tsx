@@ -4,9 +4,9 @@ import AchievementsList from '@/components/AchievementsList';
 
 export default async function AchievementsPage() {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         redirect('/auth/login');
     }
 
@@ -20,7 +20,7 @@ export default async function AchievementsPage() {
     const { data: userUnlocked } = await supabase
         .from('user_achievements')
         .select('achievement_id, unlocked_at')
-        .eq('user_id', session.user.id);
+        .eq('user_id', user.id);
 
     // Merge data to determine status
     const achievements = allAchievements?.map(achievement => {
