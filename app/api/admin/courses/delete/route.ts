@@ -1,12 +1,11 @@
 import { createClient } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { redirect } from 'next/navigation';
 
 export async function POST(request: Request) {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -14,7 +13,7 @@ export async function POST(request: Request) {
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
     if (!profile || profile.role !== 'admin') {
@@ -36,10 +35,10 @@ export async function POST(request: Request) {
 
         if (error) throw error;
 
+        return NextResponse.json({ success: true });
+
     } catch (error) {
         console.error('Error deleting course:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
-
-    redirect('/admin/courses');
 }

@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
     if (!profile || profile.role !== 'admin') {

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase-admin';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PATCH(
@@ -85,16 +86,18 @@ export async function DELETE(
             return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
         }
 
-        // Delete user
-        const { error } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', params.userId);
+        // Use admin client to delete user from Supabase Auth (bypasses RLS)
+        const adminSupabase = createAdminClient();
+        const { error: authDeleteError } = await adminSupabase.auth.admin.deleteUser(params.userId);
 
-        if (error) {
-            console.error('Error deleting user:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        if (authDeleteError) {
+            console.error('Error deleting user from Auth:', authDeleteError);
+            return NextResponse.json({ error: authDeleteError.message }, { status: 500 });
         }
+
+        // The profiles row should be deleted automatically via ON DELETE CASCADE,
+        // but we delete explicitly as a safety net.
+        await supabase.from('profiles').delete().eq('id', params.userId);
 
         return NextResponse.json({ message: 'User deleted successfully' }, { status: 200 });
     } catch (error) {
